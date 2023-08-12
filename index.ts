@@ -67,7 +67,7 @@ class Pokemon {
     return data;
   }
 
-  private renderAbilities(abilities: any) {
+  private renderAbilities(abilities: Ability[] | { ability: Ability[] }[]) {
     const template = this.abilitiesTemplate.content.cloneNode(
       true
     ) as HTMLElement;
