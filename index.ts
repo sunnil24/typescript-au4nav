@@ -15,10 +15,33 @@ interface PokemonDetails {
   abilities: Ability[];
 }
 
+type IState = {
+  [key: string]: Ability[];
+};
+
+class State {
+  private state: any;
+
+  constructor() {
+    this.state = {};
+  }
+
+  addAbilites(name: string, abilites: Ability[]) {
+    Object.assign(this.state, {
+      [name]: abilites,
+    });
+  }
+
+  get abilites() {
+    return this.state;
+  }
+}
+
 class Pokemon {
   hostElement: HTMLElement;
   dropdownTemplate: HTMLTemplateElement;
   abilitiesTemplate: HTMLTemplateElement;
+  private cache: State;
 
   constructor(public targetType: string) {
     this.hostElement = document.getElementById('app');
@@ -29,6 +52,7 @@ class Pokemon {
       'pokemon-abilities-template'
     ) as HTMLTemplateElement;
     this.targetType = targetType;
+    this.cache = new State();
   }
 
   private async fetchPokemons<T>(): Promise<T> {
@@ -72,8 +96,15 @@ class Pokemon {
 
   private async handlePokemonSelect(e) {
     const value = (e.target as HTMLSelectElement).value;
-    const details = await this.fetchPokemonsDetails<PokemonDetails>(value);
-    const abilities = details.abilities;
+    const name = e.target.options[e.target.selectedIndex].textContent;
+    let abilities: Ability[];
+    if (!this.cache.abilites[name]) {
+      const details = await this.fetchPokemonsDetails<PokemonDetails>(value);
+      abilities = details.abilities;
+      this.cache.addAbilites(name, abilities);
+    } else {
+      abilities = this.cache.abilites[name];
+    }
 
     this.renderAbilities(abilities);
   }
