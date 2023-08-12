@@ -1,25 +1,103 @@
 // Import stylesheets
 import './style.css';
 
-// Write TypeScript code!
-const appDiv: HTMLElement = document.getElementById('app');
-appDiv.innerHTML = `<h1>TypeScript Starter</h1>`;
+interface Pokemon {
+  name: string;
+  url: string;
+}
 
-class Shop {
-  private name: string;
-  readonly openTime: string;
+interface Ability {
+  name: string;
+  url: string;
+}
 
-  constructor(name: string, openAt: string) {
-    this.name = name;
-    this.openTime = openAt;
+interface PokemonDetails {
+  abilities: Ability[];
+}
+
+class Pokemon {
+  hostElement: HTMLElement;
+  dropdownTemplate: HTMLTemplateElement;
+  abilitiesTemplate: HTMLTemplateElement;
+
+  constructor(public targetType: string) {
+    this.hostElement = document.getElementById('app');
+    this.dropdownTemplate = document.getElementById(
+      'pokemon-dropdown-template'
+    ) as HTMLTemplateElement;
+    this.abilitiesTemplate = document.getElementById(
+      'pokemon-abilities-template'
+    ) as HTMLTemplateElement;
+    this.targetType = targetType;
   }
 
-  open() {
-    console.log(`this shop opens at ${this.openTime}`);
+  private async fetchPokemons<T>(): Promise<T> {
+    const response = await fetch('https://pokeapi.co/api/v2/pokemon');
+    const data = await response.json();
+    return data.results;
+  }
+
+  private async fetchPokemonsDetails<T>(url: string): Promise<T> {
+    const response = await fetch(url);
+    const data = await response.json();
+    return data;
+  }
+
+  private renderAbilities(abilities: any) {
+    const template = this.abilitiesTemplate.content.cloneNode(
+      true
+    ) as HTMLElement;
+    const wrapperElement = template.querySelector(
+      '.abilities-wrapper'
+    ) as HTMLElement;
+    wrapperElement.classList.add(`${this.targetType}-abilities-wrapper`);
+
+    const list = template.querySelector('ul');
+    list.id = 'pokemon-abilites';
+    abilities.forEach((ability) => {
+      const li = document.createElement('li');
+      li.textContent = ability.ability.name;
+      list.appendChild(li);
+    });
+
+    const abilitesOnDom = document.querySelector(
+      `.${this.targetType}-abilities-wrapper`
+    );
+
+    if (abilitesOnDom) {
+      abilitesOnDom.remove();
+    }
+    this.hostElement.appendChild(template);
+  }
+
+  private async handlePokemonSelect(e) {
+    const value = (e.target as HTMLSelectElement).value;
+    const details = await this.fetchPokemonsDetails<PokemonDetails>(value);
+    const abilities = details.abilities;
+
+    this.renderAbilities(abilities);
+  }
+
+  async render() {
+    const pokemons = await this.fetchPokemons<Pokemon[]>();
+    const template = this.dropdownTemplate.content.cloneNode(
+      true
+    ) as HTMLElement;
+
+    const dropdown = template.querySelector('select');
+    dropdown.id = 'pokemon-select';
+    dropdown.addEventListener('change', this.handlePokemonSelect.bind(this));
+
+    pokemons.forEach((pokemon) => {
+      const option = document.createElement('option');
+      option.textContent = pokemon.name;
+      option.value = pokemon.url;
+      dropdown.appendChild(option);
+    });
+
+    this.hostElement.appendChild(template);
   }
 }
 
-const medicalShop = new Shop('Apollo', '8:30 AM');
-
-console.log(medicalShop);
-medicalShop.open();
+const pokemons = new Pokemon('main');
+pokemons.render();
