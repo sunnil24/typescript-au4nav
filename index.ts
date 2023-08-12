@@ -94,19 +94,30 @@ class Pokemon {
     this.hostElement.appendChild(template);
   }
 
+  private removeCurrentAbilities() {
+    const abilitesOnDom = document.querySelector(
+      `.${this.targetType}-abilities-wrapper`
+    );
+    abilitesOnDom.remove();
+  }
+
   private async handlePokemonSelect(e) {
     const value = (e.target as HTMLSelectElement).value;
-    const name = e.target.options[e.target.selectedIndex].textContent;
-    let abilities: Ability[];
-    if (!this.cache.abilites[name]) {
-      const details = await this.fetchPokemonsDetails<PokemonDetails>(value);
-      abilities = details.abilities;
-      this.cache.addAbilites(name, abilities);
-    } else {
-      abilities = this.cache.abilites[name];
-    }
+    if (value) {
+      const name = e.target.options[e.target.selectedIndex].textContent;
+      let abilities: Ability[];
+      if (!this.cache.abilites[name]) {
+        const details = await this.fetchPokemonsDetails<PokemonDetails>(value);
+        abilities = details.abilities;
+        this.cache.addAbilites(name, abilities);
+      } else {
+        abilities = this.cache.abilites[name];
+      }
 
-    this.renderAbilities(abilities);
+      this.renderAbilities(abilities);
+    } else {
+      this.removeCurrentAbilities();
+    }
   }
 
   async render() {
