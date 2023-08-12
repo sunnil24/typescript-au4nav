@@ -20,7 +20,7 @@ type IState = {
 };
 
 class State {
-  private state: any;
+  private state: IState;
 
   constructor() {
     this.state = {};
